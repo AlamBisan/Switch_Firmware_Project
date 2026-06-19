@@ -1,0 +1,14 @@
+# Example 2-switch test topology: two access switches joined by a trunk
+# uplink, used by tests that need cross-device coverage (not just one box).
+switches:
+  - name: switch01
+    fw_version: "FW-3.2.1"
+    ports: [eth1, eth2, eth3, eth4, uplink1]
+  - name: switch02
+    fw_version: "FW-3.2.1"
+    ports: [eth1, eth2, eth3, eth4, uplink1]
+
+links:
+  - a: {switch: switch01, port: uplink1}
+    b: {switch: switch02, port: uplink1}
+    trunk_vlan: 100
