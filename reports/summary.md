@@ -1,0 +1,33 @@
+# Test Run Summary
+
+- **Total tests**: 43
+- **Passed**: 29
+- **Failed**: 14
+- **Errors**: 0
+- **Duration**: 1.85s
+
+## By Category
+
+| Category | Passed | Failed |
+|---|---|---|
+| functional | 23 | 0 |
+| regression | 2 | 2 |
+| performance | 3 | 1 |
+| security | 1 | 11 |
+
+## Open Bugs (14)
+
+- [tests_performance_test_counter_wraparound.py__test_rx_counter_wraps_cleanly_under_sustained_load](../bugs/tests_performance_test_counter_wraparound.py__test_rx_counter_wraps_cleanly_under_sustained_load.md)
+- [tests_regression_test_bug_001_speed_race.py__test_back_to_back_speed_changes_stay_consistent](../bugs/tests_regression_test_bug_001_speed_race.py__test_back_to_back_speed_changes_stay_consistent.md)
+- [tests_regression_test_bug_004_thermal_warning.py__test_thermal_warning_raised_after_temperature_crosses_threshold](../bugs/tests_regression_test_bug_004_thermal_warning.py__test_thermal_warning_raised_after_temperature_crosses_threshold.md)
+- [tests_security_test_malformed_commands.py__test_malformed_command_returns_clean_error_not_an_exception_set_](../bugs/tests_security_test_malformed_commands.py__test_malformed_command_returns_clean_error_not_an_exception_set_.md)
+- [tests_security_test_malformed_commands.py__test_malformed_command_returns_clean_error_not_an_exception_set_interface_eth1_speed_](../bugs/tests_security_test_malformed_commands.py__test_malformed_command_returns_clean_error_not_an_exception_set_interface_eth1_speed_.md)
+- [tests_security_test_malformed_commands.py__test_malformed_command_returns_clean_error_not_an_exception_set_interface_eth1_vlan_](../bugs/tests_security_test_malformed_commands.py__test_malformed_command_returns_clean_error_not_an_exception_set_interface_eth1_vlan_.md)
+- [tests_security_test_malformed_commands.py__test_malformed_command_returns_clean_error_not_an_exception_set_interface_eth1_vlan_abc_](../bugs/tests_security_test_malformed_commands.py__test_malformed_command_returns_clean_error_not_an_exception_set_interface_eth1_vlan_abc_.md)
+- [tests_security_test_malformed_commands.py__test_malformed_command_returns_clean_error_not_an_exception_show_interface_](../bugs/tests_security_test_malformed_commands.py__test_malformed_command_returns_clean_error_not_an_exception_show_interface_.md)
+- [tests_security_test_malformed_commands.py__test_malformed_command_returns_clean_error_not_an_exception_show_interface_eth99_](../bugs/tests_security_test_malformed_commands.py__test_malformed_command_returns_clean_error_not_an_exception_show_interface_eth99_.md)
+- [tests_security_test_vlan_boundary.py__test_out_of_range_vlan_is_rejected_-1_](../bugs/tests_security_test_vlan_boundary.py__test_out_of_range_vlan_is_rejected_-1_.md)
+- [tests_security_test_vlan_boundary.py__test_out_of_range_vlan_is_rejected_0_](../bugs/tests_security_test_vlan_boundary.py__test_out_of_range_vlan_is_rejected_0_.md)
+- [tests_security_test_vlan_boundary.py__test_out_of_range_vlan_is_rejected_4095_](../bugs/tests_security_test_vlan_boundary.py__test_out_of_range_vlan_is_rejected_4095_.md)
+- [tests_security_test_vlan_boundary.py__test_out_of_range_vlan_is_rejected_9999_](../bugs/tests_security_test_vlan_boundary.py__test_out_of_range_vlan_is_rejected_9999_.md)
+- [tests_security_test_vlan_boundary.py__test_rejected_vlan_does_not_change_port_state](../bugs/tests_security_test_vlan_boundary.py__test_rejected_vlan_does_not_change_port_state.md)

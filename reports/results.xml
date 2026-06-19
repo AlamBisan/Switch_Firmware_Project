@@ -1,0 +1,428 @@
+<?xml version="1.0" encoding="utf-8"?><testsuites name="pytest tests"><testsuite name="pytest" errors="0" failures="14" skipped="0" tests="43" time="1.853" timestamp="2026-06-19T20:15:58.565557+03:00" hostname="DESKTOP-NSRDAB6"><testcase classname="tests.functional.test_port_status" name="test_port_starts_admin_down" time="0.000" /><testcase classname="tests.functional.test_port_status" name="test_admin_up_brings_oper_status_up" time="0.001" /><testcase classname="tests.functional.test_port_status" name="test_admin_down_brings_oper_status_down" time="0.001" /><testcase classname="tests.functional.test_port_status" name="test_invalid_admin_status_is_rejected[enabled]" time="0.000" /><testcase classname="tests.functional.test_port_status" name="test_invalid_admin_status_is_rejected[1]" time="0.000" /><testcase classname="tests.functional.test_port_status" name="test_invalid_admin_status_is_rejected[yes]" time="0.000" /><testcase classname="tests.functional.test_socket_integration" name="test_show_version_over_the_wire" time="0.512" /><testcase classname="tests.functional.test_socket_integration" name="test_set_and_read_back_over_the_wire" time="0.513" /><testcase classname="tests.functional.test_socket_integration" name="test_unknown_command_returns_clean_error_not_a_dropped_connection" time="0.514" /><testcase classname="tests.functional.test_speed_duplex" name="test_set_speed_applies_to_admin_and_oper[1G]" time="0.002" /><testcase classname="tests.functional.test_speed_duplex" name="test_set_speed_applies_to_admin_and_oper[10G]" time="0.001" /><testcase classname="tests.functional.test_speed_duplex" name="test_set_speed_applies_to_admin_and_oper[25G]" time="0.001" /><testcase classname="tests.functional.test_speed_duplex" name="test_set_speed_applies_to_admin_and_oper[40G]" time="0.001" /><testcase classname="tests.functional.test_speed_duplex" name="test_set_speed_applies_to_admin_and_oper[100G]" time="0.001" /><testcase classname="tests.functional.test_speed_duplex" name="test_unsupported_speed_is_rejected" time="0.001" /><testcase classname="tests.functional.test_speed_duplex" name="test_default_duplex_is_full" time="0.001" /><testcase classname="tests.functional.test_topology_vlan_consistency" name="test_uplink_trunk_vlan_matches_on_both_ends" time="0.004" /><testcase classname="tests.functional.test_version_info" name="test_show_version_reports_expected_fields" time="0.000" /><testcase classname="tests.functional.test_version_info" name="test_reboot_increments_reboot_count" time="0.000" /><testcase classname="tests.functional.test_vlan" name="test_valid_vlan_is_accepted[1]" time="0.000" /><testcase classname="tests.functional.test_vlan" name="test_valid_vlan_is_accepted[100]" time="0.000" /><testcase classname="tests.functional.test_vlan" name="test_valid_vlan_is_accepted[4094]" time="0.000" /><testcase classname="tests.functional.test_vlan" name="test_port_default_vlan_is_1" time="0.000" /><testcase classname="tests.performance.test_counter_wraparound" name="test_rx_counter_wraps_cleanly_under_sustained_load" time="0.001"><failure message="AssertionError: counter did not wrap correctly under load (got 65535, expected 4464) -- BUG-002 (counter saturation) has resurfaced&#10;assert 65535 == 4464">firmware = &lt;dut.firmware.SwitchFirmware object at 0x000001CF25427410&gt;
+
+    def test_rx_counter_wraps_cleanly_under_sustained_load(firmware):
+        """Driving traffic well past COUNTER_MAX must wrap the counter, not saturate it."""
+        packets_per_call = 100
+        calls = 700  # 70,000 total packets, comfortably past the 65,535 boundary
+        total_packets = packets_per_call * calls
+    
+        for _ in range(calls):
+            firmware.execute(f"simulate traffic eth1 {packets_per_call}")
+    
+        counters = firmware.execute("show port-counters eth1")
+        expected = total_packets % (COUNTER_MAX + 1)
+&gt;       assert counters.data["rx_packets"] == expected, (
+            f"counter did not wrap correctly under load (got {counters.data['rx_packets']}, "
+            f"expected {expected}) -- BUG-002 (counter saturation) has resurfaced"
+        )
+E       AssertionError: counter did not wrap correctly under load (got 65535, expected 4464) -- BUG-002 (counter saturation) has resurfaced
+E       assert 65535 == 4464
+
+tests\performance\test_counter_wraparound.py:24: AssertionError</failure></testcase><testcase classname="tests.performance.test_counter_wraparound" name="test_rx_counter_below_max_is_exact" time="0.001" /><testcase classname="tests.performance.test_reboot_cycle_timing" name="test_repeated_reboot_cycles_stay_within_time_budget" time="0.001" /><testcase classname="tests.performance.test_reboot_cycle_timing" name="test_command_round_trip_latency_over_many_calls" time="0.001" /><testcase classname="tests.regression.test_bug_001_speed_race" name="test_back_to_back_speed_changes_stay_consistent" time="0.001"><failure message="AssertionError: oper_speed is stale -- BUG-001 (speed/duplex race) has resurfaced&#10;assert '10G' == '25G'&#10;  &#10;  - 25G&#10;  + 10G">firmware = &lt;dut.firmware.SwitchFirmware object at 0x000001CF254E7A40&gt;
+
+    def test_back_to_back_speed_changes_stay_consistent(firmware):
+        """Two speed changes issued back-to-back (no intervening poll) must both apply."""
+        firmware.execute("set interface eth1 admin up")
+        firmware.execute("set interface eth1 speed 10G")
+        firmware.execute("set interface eth1 speed 25G")  # second change, no poll in between
+    
+        status = firmware.execute("show interface eth1")
+        assert status.data["admin_speed"] == "25G"
+&gt;       assert status.data["oper_speed"] == "25G", (
+            "oper_speed is stale -- BUG-001 (speed/duplex race) has resurfaced"
+        )
+E       AssertionError: oper_speed is stale -- BUG-001 (speed/duplex race) has resurfaced
+E       assert '10G' == '25G'
+E         
+E         - 25G
+E         + 10G
+
+tests\regression\test_bug_001_speed_race.py:21: AssertionError</failure></testcase><testcase classname="tests.regression.test_bug_001_speed_race" name="test_polling_between_changes_avoids_the_race" time="0.000" /><testcase classname="tests.regression.test_bug_004_thermal_warning" name="test_thermal_warning_raised_after_temperature_crosses_threshold" time="0.000"><failure message="AssertionError: thermal_warning was not raised despite crossing the threshold -- BUG-004 has resurfaced&#10;assert False is True">firmware = &lt;dut.firmware.SwitchFirmware object at 0x000001CF25560050&gt;
+
+    def test_thermal_warning_raised_after_temperature_crosses_threshold(firmware):
+        """Enough reboot cycles to cross the thermal threshold must set thermal_warning."""
+        # Each reboot adds 3C starting from 45C; 12 reboots -&gt; 81C, past the 80C threshold.
+        for _ in range(12):
+            firmware.execute("reboot")
+    
+        version = firmware.execute("show version")
+        assert version.data["temperature_c"] &gt;= THERMAL_THRESHOLD_C
+&gt;       assert version.data["thermal_warning"] is True, (
+            "thermal_warning was not raised despite crossing the threshold -- BUG-004 has resurfaced"
+        )
+E       AssertionError: thermal_warning was not raised despite crossing the threshold -- BUG-004 has resurfaced
+E       assert False is True
+
+tests\regression\test_bug_004_thermal_warning.py:23: AssertionError</failure></testcase><testcase classname="tests.regression.test_bug_004_thermal_warning" name="test_thermal_warning_not_raised_below_threshold" time="0.000" /><testcase classname="tests.security.test_malformed_commands" name="test_malformed_command_returns_clean_error_not_an_exception[set interface eth1 speed]" time="0.000"><failure message="IndexError: list index out of range">firmware = &lt;dut.firmware.SwitchFirmware object at 0x000001CF254E7A40&gt;
+malformed_cmd = 'set interface eth1 speed'
+
+    @pytest.mark.parametrize(
+        "malformed_cmd",
+        [
+            "set interface eth1 speed",          # missing the value
+            "set interface eth1 vlan",            # missing the value
+            "set interface eth1 vlan abc",        # non-numeric value
+            "show interface",                     # missing port name
+            "show interface eth99",               # reference to a nonexistent port
+            "set",                                 # missing everything
+        ],
+    )
+    def test_malformed_command_returns_clean_error_not_an_exception(firmware, malformed_cmd):
+        """Malformed input must come back as ok=False, never raise an unhandled exception."""
+&gt;       result = firmware.execute(malformed_cmd)
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests\security\test_malformed_commands.py:29: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+dut\firmware.py:181: in execute
+    return self._dispatch(raw_cmd)
+           ^^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+self = &lt;dut.firmware.SwitchFirmware object at 0x000001CF254E7A40&gt;
+raw_cmd = 'set interface eth1 speed'
+
+    def _dispatch(self, raw_cmd: str) -&gt; CommandResult:
+        tokens = raw_cmd.strip().split()
+        if not tokens:
+            return CommandResult(False, "ERROR: empty command")
+        verb = tokens[0].lower()
+    
+        if verb == "show":
+            sub = tokens[1].lower()
+            if sub == "version":
+                return self.show_version()
+            if sub == "interface":
+                return self.show_interface(tokens[2])
+            if sub == "port-counters":
+                return self.show_port_counters(tokens[2])
+            return CommandResult(False, f"ERROR: unknown show target '{sub}'")
+    
+        if verb == "set":
+            sub = tokens[1].lower()
+            if sub == "interface":
+                port_name, attr = tokens[2], tokens[3].lower()
+                if attr == "admin":
+                    return self.set_admin_status(port_name, tokens[4].lower())
+                if attr == "speed":
+&gt;                   return self.set_port_speed(port_name, tokens[4].upper())
+                                                          ^^^^^^^^^
+E                   IndexError: list index out of range
+
+dut\firmware.py:206: IndexError</failure></testcase><testcase classname="tests.security.test_malformed_commands" name="test_malformed_command_returns_clean_error_not_an_exception[set interface eth1 vlan]" time="0.001"><failure message="IndexError: list index out of range">firmware = &lt;dut.firmware.SwitchFirmware object at 0x000001CF25560F80&gt;
+malformed_cmd = 'set interface eth1 vlan'
+
+    @pytest.mark.parametrize(
+        "malformed_cmd",
+        [
+            "set interface eth1 speed",          # missing the value
+            "set interface eth1 vlan",            # missing the value
+            "set interface eth1 vlan abc",        # non-numeric value
+            "show interface",                     # missing port name
+            "show interface eth99",               # reference to a nonexistent port
+            "set",                                 # missing everything
+        ],
+    )
+    def test_malformed_command_returns_clean_error_not_an_exception(firmware, malformed_cmd):
+        """Malformed input must come back as ok=False, never raise an unhandled exception."""
+&gt;       result = firmware.execute(malformed_cmd)
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests\security\test_malformed_commands.py:29: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+dut\firmware.py:181: in execute
+    return self._dispatch(raw_cmd)
+           ^^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+self = &lt;dut.firmware.SwitchFirmware object at 0x000001CF25560F80&gt;
+raw_cmd = 'set interface eth1 vlan'
+
+    def _dispatch(self, raw_cmd: str) -&gt; CommandResult:
+        tokens = raw_cmd.strip().split()
+        if not tokens:
+            return CommandResult(False, "ERROR: empty command")
+        verb = tokens[0].lower()
+    
+        if verb == "show":
+            sub = tokens[1].lower()
+            if sub == "version":
+                return self.show_version()
+            if sub == "interface":
+                return self.show_interface(tokens[2])
+            if sub == "port-counters":
+                return self.show_port_counters(tokens[2])
+            return CommandResult(False, f"ERROR: unknown show target '{sub}'")
+    
+        if verb == "set":
+            sub = tokens[1].lower()
+            if sub == "interface":
+                port_name, attr = tokens[2], tokens[3].lower()
+                if attr == "admin":
+                    return self.set_admin_status(port_name, tokens[4].lower())
+                if attr == "speed":
+                    return self.set_port_speed(port_name, tokens[4].upper())
+                if attr == "vlan":
+&gt;                   return self.set_vlan(port_name, int(tokens[4]))
+                                                        ^^^^^^^^^
+E                   IndexError: list index out of range
+
+dut\firmware.py:208: IndexError</failure></testcase><testcase classname="tests.security.test_malformed_commands" name="test_malformed_command_returns_clean_error_not_an_exception[set interface eth1 vlan abc]" time="0.001"><failure message="ValueError: invalid literal for int() with base 10: 'abc'">firmware = &lt;dut.firmware.SwitchFirmware object at 0x000001CF25561130&gt;
+malformed_cmd = 'set interface eth1 vlan abc'
+
+    @pytest.mark.parametrize(
+        "malformed_cmd",
+        [
+            "set interface eth1 speed",          # missing the value
+            "set interface eth1 vlan",            # missing the value
+            "set interface eth1 vlan abc",        # non-numeric value
+            "show interface",                     # missing port name
+            "show interface eth99",               # reference to a nonexistent port
+            "set",                                 # missing everything
+        ],
+    )
+    def test_malformed_command_returns_clean_error_not_an_exception(firmware, malformed_cmd):
+        """Malformed input must come back as ok=False, never raise an unhandled exception."""
+&gt;       result = firmware.execute(malformed_cmd)
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests\security\test_malformed_commands.py:29: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+dut\firmware.py:181: in execute
+    return self._dispatch(raw_cmd)
+           ^^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+self = &lt;dut.firmware.SwitchFirmware object at 0x000001CF25561130&gt;
+raw_cmd = 'set interface eth1 vlan abc'
+
+    def _dispatch(self, raw_cmd: str) -&gt; CommandResult:
+        tokens = raw_cmd.strip().split()
+        if not tokens:
+            return CommandResult(False, "ERROR: empty command")
+        verb = tokens[0].lower()
+    
+        if verb == "show":
+            sub = tokens[1].lower()
+            if sub == "version":
+                return self.show_version()
+            if sub == "interface":
+                return self.show_interface(tokens[2])
+            if sub == "port-counters":
+                return self.show_port_counters(tokens[2])
+            return CommandResult(False, f"ERROR: unknown show target '{sub}'")
+    
+        if verb == "set":
+            sub = tokens[1].lower()
+            if sub == "interface":
+                port_name, attr = tokens[2], tokens[3].lower()
+                if attr == "admin":
+                    return self.set_admin_status(port_name, tokens[4].lower())
+                if attr == "speed":
+                    return self.set_port_speed(port_name, tokens[4].upper())
+                if attr == "vlan":
+&gt;                   return self.set_vlan(port_name, int(tokens[4]))
+                                                    ^^^^^^^^^^^^^^
+E                   ValueError: invalid literal for int() with base 10: 'abc'
+
+dut\firmware.py:208: ValueError</failure></testcase><testcase classname="tests.security.test_malformed_commands" name="test_malformed_command_returns_clean_error_not_an_exception[show interface]" time="0.001"><failure message="IndexError: list index out of range">firmware = &lt;dut.firmware.SwitchFirmware object at 0x000001CF25561370&gt;
+malformed_cmd = 'show interface'
+
+    @pytest.mark.parametrize(
+        "malformed_cmd",
+        [
+            "set interface eth1 speed",          # missing the value
+            "set interface eth1 vlan",            # missing the value
+            "set interface eth1 vlan abc",        # non-numeric value
+            "show interface",                     # missing port name
+            "show interface eth99",               # reference to a nonexistent port
+            "set",                                 # missing everything
+        ],
+    )
+    def test_malformed_command_returns_clean_error_not_an_exception(firmware, malformed_cmd):
+        """Malformed input must come back as ok=False, never raise an unhandled exception."""
+&gt;       result = firmware.execute(malformed_cmd)
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests\security\test_malformed_commands.py:29: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+dut\firmware.py:181: in execute
+    return self._dispatch(raw_cmd)
+           ^^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+self = &lt;dut.firmware.SwitchFirmware object at 0x000001CF25561370&gt;
+raw_cmd = 'show interface'
+
+    def _dispatch(self, raw_cmd: str) -&gt; CommandResult:
+        tokens = raw_cmd.strip().split()
+        if not tokens:
+            return CommandResult(False, "ERROR: empty command")
+        verb = tokens[0].lower()
+    
+        if verb == "show":
+            sub = tokens[1].lower()
+            if sub == "version":
+                return self.show_version()
+            if sub == "interface":
+&gt;               return self.show_interface(tokens[2])
+                                           ^^^^^^^^^
+E               IndexError: list index out of range
+
+dut\firmware.py:194: IndexError</failure></testcase><testcase classname="tests.security.test_malformed_commands" name="test_malformed_command_returns_clean_error_not_an_exception[show interface eth99]" time="0.001"><failure message="KeyError: 'eth99'">firmware = &lt;dut.firmware.SwitchFirmware object at 0x000001CF255615B0&gt;
+malformed_cmd = 'show interface eth99'
+
+    @pytest.mark.parametrize(
+        "malformed_cmd",
+        [
+            "set interface eth1 speed",          # missing the value
+            "set interface eth1 vlan",            # missing the value
+            "set interface eth1 vlan abc",        # non-numeric value
+            "show interface",                     # missing port name
+            "show interface eth99",               # reference to a nonexistent port
+            "set",                                 # missing everything
+        ],
+    )
+    def test_malformed_command_returns_clean_error_not_an_exception(firmware, malformed_cmd):
+        """Malformed input must come back as ok=False, never raise an unhandled exception."""
+&gt;       result = firmware.execute(malformed_cmd)
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests\security\test_malformed_commands.py:29: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+dut\firmware.py:181: in execute
+    return self._dispatch(raw_cmd)
+           ^^^^^^^^^^^^^^^^^^^^^^^
+dut\firmware.py:194: in _dispatch
+    return self.show_interface(tokens[2])
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+dut\firmware.py:84: in show_interface
+    port = self._port(port_name)
+           ^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+self = &lt;dut.firmware.SwitchFirmware object at 0x000001CF255615B0&gt;
+name = 'eth99'
+
+    def _port(self, name: str) -&gt; Port:
+&gt;       return self.ports[name]  # KeyError on unknown port is intentional (see BUG-005)
+               ^^^^^^^^^^^^^^^^
+E       KeyError: 'eth99'
+
+dut\firmware.py:68: KeyError</failure></testcase><testcase classname="tests.security.test_malformed_commands" name="test_malformed_command_returns_clean_error_not_an_exception[set]" time="0.001"><failure message="IndexError: list index out of range">firmware = &lt;dut.firmware.SwitchFirmware object at 0x000001CF255617F0&gt;
+malformed_cmd = 'set'
+
+    @pytest.mark.parametrize(
+        "malformed_cmd",
+        [
+            "set interface eth1 speed",          # missing the value
+            "set interface eth1 vlan",            # missing the value
+            "set interface eth1 vlan abc",        # non-numeric value
+            "show interface",                     # missing port name
+            "show interface eth99",               # reference to a nonexistent port
+            "set",                                 # missing everything
+        ],
+    )
+    def test_malformed_command_returns_clean_error_not_an_exception(firmware, malformed_cmd):
+        """Malformed input must come back as ok=False, never raise an unhandled exception."""
+&gt;       result = firmware.execute(malformed_cmd)
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests\security\test_malformed_commands.py:29: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+dut\firmware.py:181: in execute
+    return self._dispatch(raw_cmd)
+           ^^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+self = &lt;dut.firmware.SwitchFirmware object at 0x000001CF255617F0&gt;
+raw_cmd = 'set'
+
+    def _dispatch(self, raw_cmd: str) -&gt; CommandResult:
+        tokens = raw_cmd.strip().split()
+        if not tokens:
+            return CommandResult(False, "ERROR: empty command")
+        verb = tokens[0].lower()
+    
+        if verb == "show":
+            sub = tokens[1].lower()
+            if sub == "version":
+                return self.show_version()
+            if sub == "interface":
+                return self.show_interface(tokens[2])
+            if sub == "port-counters":
+                return self.show_port_counters(tokens[2])
+            return CommandResult(False, f"ERROR: unknown show target '{sub}'")
+    
+        if verb == "set":
+&gt;           sub = tokens[1].lower()
+                  ^^^^^^^^^
+E           IndexError: list index out of range
+
+dut\firmware.py:200: IndexError</failure></testcase><testcase classname="tests.security.test_malformed_commands" name="test_oversized_command_is_rejected_cleanly" time="0.000" /><testcase classname="tests.security.test_vlan_boundary" name="test_out_of_range_vlan_is_rejected[0]" time="0.001"><failure message="AssertionError: VLAN 0 was accepted -- BUG-003 (missing VLAN range validation) has resurfaced&#10;assert not True&#10; +  where True = CommandResult(ok=True, message='OK', data={}).ok">firmware = &lt;dut.firmware.SwitchFirmware object at 0x000001CF25561BE0&gt;
+invalid_vlan = 0
+
+    @pytest.mark.parametrize("invalid_vlan", [0, 4095, 9999, -1])
+    def test_out_of_range_vlan_is_rejected(firmware, invalid_vlan):
+        """VLAN IDs outside 1-4094 must be rejected, not silently applied."""
+        result = firmware.execute(f"set interface eth1 vlan {invalid_vlan}")
+&gt;       assert not result.ok, (
+            f"VLAN {invalid_vlan} was accepted -- BUG-003 (missing VLAN range validation) has resurfaced"
+        )
+E       AssertionError: VLAN 0 was accepted -- BUG-003 (missing VLAN range validation) has resurfaced
+E       assert not True
+E        +  where True = CommandResult(ok=True, message='OK', data={}).ok
+
+tests\security\test_vlan_boundary.py:17: AssertionError</failure></testcase><testcase classname="tests.security.test_vlan_boundary" name="test_out_of_range_vlan_is_rejected[4095]" time="0.001"><failure message="AssertionError: VLAN 4095 was accepted -- BUG-003 (missing VLAN range validation) has resurfaced&#10;assert not True&#10; +  where True = CommandResult(ok=True, message='OK', data={}).ok">firmware = &lt;dut.firmware.SwitchFirmware object at 0x000001CF25561A30&gt;
+invalid_vlan = 4095
+
+    @pytest.mark.parametrize("invalid_vlan", [0, 4095, 9999, -1])
+    def test_out_of_range_vlan_is_rejected(firmware, invalid_vlan):
+        """VLAN IDs outside 1-4094 must be rejected, not silently applied."""
+        result = firmware.execute(f"set interface eth1 vlan {invalid_vlan}")
+&gt;       assert not result.ok, (
+            f"VLAN {invalid_vlan} was accepted -- BUG-003 (missing VLAN range validation) has resurfaced"
+        )
+E       AssertionError: VLAN 4095 was accepted -- BUG-003 (missing VLAN range validation) has resurfaced
+E       assert not True
+E        +  where True = CommandResult(ok=True, message='OK', data={}).ok
+
+tests\security\test_vlan_boundary.py:17: AssertionError</failure></testcase><testcase classname="tests.security.test_vlan_boundary" name="test_out_of_range_vlan_is_rejected[9999]" time="0.000"><failure message="AssertionError: VLAN 9999 was accepted -- BUG-003 (missing VLAN range validation) has resurfaced&#10;assert not True&#10; +  where True = CommandResult(ok=True, message='OK', data={}).ok">firmware = &lt;dut.firmware.SwitchFirmware object at 0x000001CF25561C70&gt;
+invalid_vlan = 9999
+
+    @pytest.mark.parametrize("invalid_vlan", [0, 4095, 9999, -1])
+    def test_out_of_range_vlan_is_rejected(firmware, invalid_vlan):
+        """VLAN IDs outside 1-4094 must be rejected, not silently applied."""
+        result = firmware.execute(f"set interface eth1 vlan {invalid_vlan}")
+&gt;       assert not result.ok, (
+            f"VLAN {invalid_vlan} was accepted -- BUG-003 (missing VLAN range validation) has resurfaced"
+        )
+E       AssertionError: VLAN 9999 was accepted -- BUG-003 (missing VLAN range validation) has resurfaced
+E       assert not True
+E        +  where True = CommandResult(ok=True, message='OK', data={}).ok
+
+tests\security\test_vlan_boundary.py:17: AssertionError</failure></testcase><testcase classname="tests.security.test_vlan_boundary" name="test_out_of_range_vlan_is_rejected[-1]" time="0.001"><failure message="AssertionError: VLAN -1 was accepted -- BUG-003 (missing VLAN range validation) has resurfaced&#10;assert not True&#10; +  where True = CommandResult(ok=True, message='OK', data={}).ok">firmware = &lt;dut.firmware.SwitchFirmware object at 0x000001CF25561AC0&gt;
+invalid_vlan = -1
+
+    @pytest.mark.parametrize("invalid_vlan", [0, 4095, 9999, -1])
+    def test_out_of_range_vlan_is_rejected(firmware, invalid_vlan):
+        """VLAN IDs outside 1-4094 must be rejected, not silently applied."""
+        result = firmware.execute(f"set interface eth1 vlan {invalid_vlan}")
+&gt;       assert not result.ok, (
+            f"VLAN {invalid_vlan} was accepted -- BUG-003 (missing VLAN range validation) has resurfaced"
+        )
+E       AssertionError: VLAN -1 was accepted -- BUG-003 (missing VLAN range validation) has resurfaced
+E       assert not True
+E        +  where True = CommandResult(ok=True, message='OK', data={}).ok
+
+tests\security\test_vlan_boundary.py:17: AssertionError</failure></testcase><testcase classname="tests.security.test_vlan_boundary" name="test_rejected_vlan_does_not_change_port_state" time="0.001"><failure message="assert 99999 == 50">firmware = &lt;dut.firmware.SwitchFirmware object at 0x000001CF25561EB0&gt;
+
+    def test_rejected_vlan_does_not_change_port_state(firmware):
+        """A rejected VLAN write must leave the port's existing VLAN untouched."""
+        firmware.execute("set interface eth1 vlan 50")
+        firmware.execute("set interface eth1 vlan 99999")  # should be rejected
+        status = firmware.execute("show interface eth1")
+&gt;       assert status.data["vlan"] == 50
+E       assert 99999 == 50
+
+tests\security\test_vlan_boundary.py:27: AssertionError</failure></testcase></testsuite></testsuites>
