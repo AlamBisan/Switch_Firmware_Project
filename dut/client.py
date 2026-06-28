@@ -1,8 +1,7 @@
 """Pythonic automation client for the mock switch's TCP management interface.
 
-This is the layer real test automation would call into (vs. crafting raw
-CLI strings by hand) -- analogous to the "automation framework" layer the
-job description asks QA to extend with new capabilities.
+This is the layer real test automation would call into (instead of crafting raw
+CLI strings by hand)
 """
 from __future__ import annotations
 
